@@ -59,6 +59,9 @@ returns_mean = returns.mean(axis= 0)
 demeaned_returns = returns - returns_mean
 
 cov_matrix = (demeaned_returns.T @ demeaned_returns) / (T - 1)
+#%%
+# Computing the covariance matrix - Method 2
+# cov_matrix = np.cov(returns, rowvar= False)
 #%% Computing Portfolio Variance
 portfolio_variance = weights.T @ cov_matrix @ weights
 #%%
@@ -94,8 +97,22 @@ rolling_window = np.lib.stride_tricks.sliding_window_view(returns, window_shape 
 rolling_window.shape    #(1231, 1000, 30)
 #%%
 rolling_vol_2 = rolling_window.std(axis=2)
+#%%
+# Using Cumsum - Easiest and fastest (Most memory efficient)
+# Var(X)=E[X**2]−(E[X])**2 = mean(sq of returns) - mean(returns)**2
+cumsum = np.cumsum(returns, axis=0)
+cumsum_sq = np.cumsum(returns**2, axis=0)
 
+cumsum = np.vstack([np.zeros((1, returns.shape[1])), cumsum])
+cumsum_sq = np.vstack([np.zeros((1, returns.shape[1])), cumsum_sq])
 
+mean = (cumsum[window:] - cumsum[:-window])/window
+mean_sq = (cumsum_sq[window:] - cumsum_sq[:-window])/window
+
+rolling_var = mean_sq - mean**2
+rolling_vol_3 = np.sqrt(rolling_var)
+#%%
+np.allclose(rolling_vol, rolling_vol_3)  ## True
 
 
 
